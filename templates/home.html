@@ -26,6 +26,7 @@
           processData: false,
           contentType: false,
           success: function (data) {
+            //следует добавить проверку типов. Чтобы не выводился значок изображения в случае, если мы загружаем не изображение
             var container = $('#image_container');
             if (container.find('img').length) {
               container.find('img').attr('src', data.Path)
