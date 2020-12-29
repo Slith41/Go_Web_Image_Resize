@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5,8 +7,10 @@
   <title>Document</title>
 </head>
 <body>
-  <form id="upload_form" action="/upload">
+  <form id="upload_form" action="http://localhost:8080/upload">
     <input type="file">
+    <input type="number" step="1" name="width">
+    <input type="number" step="1" name="height">
     <input type="submit" value="upload">
   </form>
   <div id="image_container"></div>
@@ -16,8 +20,7 @@
     $(document).ready(function () {
       $('#upload_form').on('submit', function (e) {
         e.preventDefault();
-        var data = new FormData();
-        console.log($(this).find('input[type="file"]').prop('files')[0])
+        var data = new FormData(this);
         data.append('image', $(this).find('input[type="file"]').prop('files')[0])
         $.ajax({
           url: $(this).attr('action'),
@@ -26,7 +29,6 @@
           processData: false,
           contentType: false,
           success: function (data) {
-            //следует добавить проверку типов. Чтобы не выводился значок изображения в случае, если мы загружаем не изображение
             var container = $('#image_container');
             if (container.find('img').length) {
               container.find('img').attr('src', data.Path)
