@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -9,8 +11,12 @@ import (
 	"image/jpeg"
 	"image/png"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/nfnt/resize"
@@ -25,7 +31,6 @@ type UploadResponse struct {
 	Path string
 }
 
-<<<<<<< HEAD
 type UploadRequest struct {
 	Width  int
 	Height int
@@ -96,8 +101,6 @@ func doResize(file multipart.File, filename string, width string, height string,
 	return path
 }
 
-=======
->>>>>>> 0c63fd01a7a1f30d67ab5804dd3dfee2b2068c69
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("File Upload Endpoint Hit")
 
@@ -110,7 +113,6 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-<<<<<<< HEAD
 	imageExtension := handler.Header.Get("Content-type")
 
 	if imageExtension == "image/jpeg" || imageExtension == "image/jpg" {
@@ -135,99 +137,6 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(data)
-=======
-
-	imageType := handler.Header.Get("Content-Type")
-
-	if imageType == "image/jpeg" || imageType == "image/png" || imageType == "image/gif" {
-		switch imageType {
-		case "image/jpeg":
-
-			img, _, err := image.Decode(file)
-			resizedImage := resize.Resize(1000, 1000, img, resize.Lanczos3)
-			path := fmt.Sprintf("media/%s", handler.Filename)
-
-			out, err := os.Create(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer out.Close()
-
-			// write new image to file
-			jpeg.Encode(out, resizedImage, nil)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			data := UploadResponse{Path: path}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			json.NewEncoder(w).Encode(data)
-			break
-
-		case "image/png":
-
-			img, _, err := image.Decode(file)
-			resizedImage := resize.Resize(1000, 1000, img, resize.Lanczos3)
-			path := fmt.Sprintf("media/%s", handler.Filename)
-
-			out, err := os.Create(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer out.Close()
-
-			// write new image to file
-			png.Encode(out, resizedImage)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			data := UploadResponse{Path: path}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			json.NewEncoder(w).Encode(data)
-			break
-
-		case "image/gif":
-			newGifImg := gif.GIF{}
-			gifImg, err := gif.DecodeAll(file)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for _, img := range gifImg.Image {
-				resizedGifImg := resize.Resize(500, 0, img, resize.Lanczos2)
-				palettedImg := image.NewPaletted(resizedGifImg.Bounds(), img.Palette)
-				draw.FloydSteinberg.Draw(palettedImg, resizedGifImg.Bounds(), resizedGifImg, image.ZP)
-
-				newGifImg.Image = append(newGifImg.Image, palettedImg)
-				newGifImg.Delay = append(newGifImg.Delay, 25)
-			}
-			path := fmt.Sprintf("media/%s", handler.Filename)
-			out, err := os.Create(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer out.Close()
-
-			gif.EncodeAll(out, &newGifImg)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			data := UploadResponse{Path: path}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			json.NewEncoder(w).Encode(data)
-
-			break
-		}
-
-	} else {
-		fmt.Println(errors.New("Eror.A file should be either png, jpeg or gif"))
->>>>>>> 0c63fd01a7a1f30d67ab5804dd3dfee2b2068c69
 	}
 }
 
