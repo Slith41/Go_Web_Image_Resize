@@ -42,10 +42,10 @@ func getPictureHash(parts [3]string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func doResize(file multipart.File, filename string, width string, height string, imageType string) string {
-	var parts [3]string
+func doResize(file multipart.File, filename string, width string, height string) string {
+	var parts [3]string //здесь мы создаем структуру, которая включает в себя элементы, которые будут входить в параметры кэша.
 	parts[0] = filename
-	parts[1] = width
+	parts[1] = width //width и height представлены в виде строк так как будут вводиться пользователем
 	parts[2] = height
 	hash := getPictureHash(parts)
 	path := fmt.Sprintf("media/%s%s", hash, filepath.Ext(filename))
@@ -54,9 +54,9 @@ func doResize(file multipart.File, filename string, width string, height string,
 	}
 
 	fmt.Println("doResize")
-	if imageType == "jpg" || imageType == "jpeg" || imageType == "png" {
+	if filepath.Ext(filename) == ".jpeg" || filepath.Ext(filename) == ".jpg" || filepath.Ext(filename) == ".png" {
 		img, _, err := image.Decode(file)
-		width64, _ := strconv.ParseUint(width, 10, 32)
+		width64, _ := strconv.ParseUint(width, 10, 32) //конвертация введенных данных в uint для передачи в функцию ресайза
 		height64, _ := strconv.ParseUint(height, 10, 32)
 		m := resize.Resize(uint(width64), uint(height64), img, resize.Lanczos3)
 
@@ -65,12 +65,12 @@ func doResize(file multipart.File, filename string, width string, height string,
 			return path
 		}
 		defer out.Close()
-		if imageType == "jpeg" || imageType == "jpg" {
-			jpeg.Encode(out, m, nil)
-		} else if imageType == "png" {
+		if filepath.Ext(filename) == ".jpeg" || filepath.Ext(filename) == ".jpg" { //так как Encode jpeg и png отличвается, мы делаем
+			jpeg.Encode(out, m, nil) //проверку на принадлежность к одному из типов и затем используем соответствующие функции
+		} else if filepath.Ext(filename) == ".png" {
 			png.Encode(out, m)
 		}
-	} else if imageType == "gif" {
+	} else if filepath.Ext(filename) == ".gif" { //гифка вынесена, так как требует немного другой обработки
 		newGifImg := gif.GIF{}
 		width64, _ := strconv.ParseUint(width, 10, 32)
 		height64, _ := strconv.ParseUint(height, 10, 32)
@@ -113,27 +113,25 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	imageExtension := handler.Header.Get("Content-type")
-
-	if imageExtension == "image/jpeg" || imageExtension == "image/jpg" {
-		path := doResize(file, handler.Filename, width, height, "jpeg")
+	if filepath.Ext(handler.Filename) == ".jpeg" || filepath.Ext(handler.Filename) == ".jpg" {
+		path := doResize(file, handler.Filename, width, height)
 
 		data := UploadResponse{Path: path}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(data)
-	} else if imageExtension == "image/png" {
-		path := doResize(file, handler.Filename, width, height, "png")
+	} else if filepath.Ext(handler.Filename) == ".png" {
+		path := doResize(file, handler.Filename, width, height)
 
 		data := UploadResponse{Path: path}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(data)
 
-	} else if imageExtension == "image/gif" {
-		path := doResize(file, handler.Filename, width, height, "gif")
+	} else if filepath.Ext(handler.Filename) == ".gif" {
+		path := doResize(file, handler.Filename, width, height)
 
-		data := UploadResponse{Path: path}
+		data := UploadResponse{Path: path} //Следующий блок - работа с JSON, который в итоге передаст путь к сохраненному файлу в HTML
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(data)
